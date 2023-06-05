@@ -4,9 +4,11 @@
   library(plotrix)
 ##Daten Einlesen ---------------------------------------------------------
   #über direkte Ansteuerung 
-  ESS<-readRDS(file="./Data/ess.rds")
-
-  # ESS<-readRDS(file="D:/OneDrive/Teaching/Kurse/Survey_r/Data/ess.rds")
+  ESS<-readRDS(file="ess.rds")
+  
+  #
+  ESS<-readRDS(file=choose.files())
+  #ESS<-readRDS(file="D:/OneDrive/Teaching/Kurse/Survey_r/Data/ess.rds")
 
 # Deskriptive Daten -------------------------------------------------------
 ##  1 -----------------------------------------------------------------
@@ -18,8 +20,8 @@
 
 ##  2:Gruppiert nach Land--------------------------------------------------------------
   ESS%>%
-    group_by(country)%>%
-    summarize(trstplt_mittel=median(trstplt,na.rm=T),
+    group_by(cntry)%>%
+    dplyr::summarize(trstplt_mittel=median(trstplt,na.rm=T),
              trstplt_durch=mean(trstplt,na.rm=T),
              lr_mittel=median(lr,na.rm=T),
              lr_durch=mean(lr,na.rm=T))
@@ -27,7 +29,7 @@
 ##  3:Gruppiert nach Zeit-----------------------------------------------------------
   ESS%>%
     group_by(essround)%>%
-    summarize(trstplt_mittel=median(trstplt,na.rm=T),
+    dplyr::summarize(trstplt_mittel=median(trstplt,na.rm=T),
              trstplt_durch=mean(trstplt,na.rm=T),
              lr_mittel=median(lr,na.rm=T),
              lr_durch=mean(lr,na.rm=T))
@@ -36,18 +38,18 @@
 ##  4: Zweifache Gruppierung + Pivot-----------------------------------------------------------
   ESS%>%
     group_by(essround,country)%>%
-    summarize(trstplt_mittel=median(trstplt,na.rm=T),
+    dplyr::summarize(trstplt_mittel=median(trstplt,na.rm=T),
              trstplt_durch=mean(trstplt,na.rm=T),
              lr_mittel=median(lr,na.rm=T),
              lr_durch=mean(lr,na.rm=T))%>%
-    pivot_wider(names_from =essround, values_from = starts_with(c("trstplt","lr")))%>%
+    pivot_wider(names_from =essround, values_from = starts_with(c("trstplt_durch","lr")))%>%
     print(n=30)
 
   #Schwer zu lesen- vereinfacht für eine Variable  
   ESS%>%
       group_by(essround,country)%>%
-      summarize(trstplt_mittel=median(trstplt,na.rm=T))%>%
-      pivot_wider(names_from =essround, values_from = starts_with(c("trstplt","lr")))%>%
+      dplyr::summarize(trstplt_mittel=mean(trstplt,na.rm=T))%>%
+      pivot_wider(names_from =essround, values_from = starts_with(c("trstplt_mittel","lr")))%>%
       print(n=30)
   
   
@@ -55,7 +57,7 @@
 ##  5: Hauptfrequenz der Aktivität--------------------------------------------
   ESS %>%
     group_by(activity_simple) %>%
-    summarize(n=n())%>%
+     dplyr::summarize(n=n())%>%
     mutate(freq = n / sum(n))
   
   
@@ -66,7 +68,7 @@
     filter(country %in% c("GB","DE","FR"))%>%
     group_by(activity_simple,country) %>%
     filter(!is.na(activity_simple))%>%
-    summarize(n=n())%>%
+     dplyr::summarize(n=n())%>%
     mutate(freq = n / sum(n))
 
   
@@ -76,7 +78,7 @@
   ESS %>%
     filter(country %in% c("GB","DE","FR"))%>%
     group_by(activity_simple,country) %>%
-    summarize(n=n())%>%
+     dplyr::summarize(n=n())%>%
     group_by(country)%>%
     mutate(total =  sum(n),
            freq = n/total)
@@ -89,11 +91,11 @@
     fig_se<-
       ESS%>%
         group_by(activity_simple)%>%
-        summarize(trust_mean=mean(trstplt,na.rm=T),
+         dplyr::summarize(trust_mean=mean(trstplt,na.rm=T),
                   se= std.error(trstplt,na.rm=T))%>%
         filter(!is.na(activity_simple))%>%
         filter(activity_simple!="Andere Tätigkeiten")%>%
-        ggplot()+
+        ggplot(.)+
           aes(x=activity_simple, y=trust_mean, 
               ymin=trust_mean-1.96*se,ymax=trust_mean+1.96*se)+
           geom_col(color="black",fill="gray")+
@@ -111,7 +113,7 @@
       ESS%>%
         filter(country %in% c("GB","DE","FR","DK","GR"))%>%
         group_by(activity_simple,country)%>%
-        summarize(trust_mean=mean(trstplt,na.rm=T),
+         dplyr::summarize(trust_mean=mean(trstplt,na.rm=T),
                   se= std.error(trstplt,na.rm=T))%>%
         filter(!is.na(activity_simple))%>%
         filter(activity_simple!="Andere Tätigkeiten")%>%
@@ -134,18 +136,19 @@
 ##8- Politikvertrauen über die Zeit ------------------------------------------
   ESS%>%
         group_by(essround)%>%
-        summarize(trust_mean=mean(trstplt,na.rm=T))%>%
-        ggplot()+
-          aes(x=essround, y=trust_mean)+
-          geom_line()+
-          xlab("Jahr")+
-          ylab("Durschnittliches Politiker:innenvertrauen")+
-          ggtitle("Durschnittliches Politiker:innenvertrauen in Europa Über die Zeit")+
-          theme_bw()+
-          scale_x_continuous(breaks=seq(1:9),
-                             labels=seq(from=2002, to=2018, by=2))
-          
-    
+         dplyr::summarize(trust_mean=mean(trstplt,na.rm=T))%>%
+            ggplot()+
+            aes(x=essround, y=trust_mean)+
+            geom_line()+
+            xlab("Jahr")+
+            ylab("Durschnittliches Politiker:innenvertrauen")+
+            ggtitle("Durschnittliches Politiker:innenvertrauen in Europa Über die Zeit")+
+            theme_bw()+
+            scale_x_continuous(breaks=seq(1:9),
+                               labels=seq(from=2002, to=2018, by=2))+
+            ylim(0,10)
+            
+      
 ##9- Politikvertrauen über die Zeit -Ländervergleich----------------------------
   ESS%>%
     filter(country %in% c("GB","DE","DK","IT","GR"))%>%        
@@ -170,18 +173,17 @@
    ESS%>%
     sample_n(10000)%>%
     ggplot()+
-      aes(x=ppltrst, y=pplfair)+
+      aes(x=happy, y=pplfair)+
       theme_bw()+
-      geom_point(position=position_jitter(), alpha=0.4)+
+      geom_point(position=position_jitter(), alpha=0.1)+
       xlab("Lebenszufriedenheit")+
       ylab("Allgemeines Vertrauen")+
-      theme_bw()+
       geom_smooth(method="lm")
     
     
     
     
-#Killian - super Beispiel für Daten Reinigen 
+#Super Beispiel für Daten Reinigen 
     #Lrscale - nicht bereinigt 
     
     ESS%>%
@@ -191,7 +193,7 @@
     
     ESS%>%
         group_by(lrscale)%>%
-        summarize(trustplt_mean=mean(trstplt,na.rm=T))%>%
+         dplyr::summarize(trustplt_mean=mean(trstplt,na.rm=T))%>%
          ggplot()+
      aes(x=lrscale, y=trustplt_mean)+
      geom_point ()+
@@ -203,7 +205,7 @@
   #LR Bereinigt 
   ESS%>%
         group_by(lr)%>%
-        summarize(trustplt_mean=mean(trstplt,na.rm=T))%>%
+         dplyr::summarize(trustplt_mean=mean(trstplt,na.rm=T))%>%
          ggplot()+
      aes(x=lr, y=trustplt_mean)+
      geom_point ()+

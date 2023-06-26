@@ -1,4 +1,4 @@
-####Setup####
+#Setup--------------------------
   library(haven)
   library(tidyverse)
   library(labelled)
@@ -8,14 +8,11 @@
   DATA<-read_sav("aar1.sav")
   DATA<-read_sav(choose.files())
   
-#Check Data####
+##Check Data--------------------------
   View(DATA)
-  
-  
-  
-  
-####Data Cleaning####
-  ####*Sociodemographics####  
+
+#Data Cleaning----------------------------------
+##Sociodemographics---------------------
   DATA$gender_resp<-as_factor(DATA$v_13)
   DATA$migrant<-as_factor(DATA$c_0013)
   DATA$edu_simple<-as_factor(DATA$v_15)
@@ -25,11 +22,12 @@
   DATA$activity<-as_factor(DATA$v_28)
   
   
-  ####*Corona Evaluations####
+  ##Corona Evaluations---------------------
   DATA$corona_affected<-car::recode(DATA$v_203,"98=NA;99=NA")
   DATA$corona_fear<-car::recode(DATA$v_207,"98=NA;99=NA")
   DATA$corona_eval<-car::recode(DATA$v_205,"98=NA;99=NA")
   
+  ##Main Activity---------------------
   ## Recoding DATA$activity into DATA$activity_simple
     DATA$activity_simple <- recode_factor(DATA$activity,
       "Vollzeit berufstätig" = "Full_Time",
@@ -46,7 +44,7 @@
     )
   
   
-  ####*Own identity####
+##Own identity---------------------
   temp<-look_for(DATA,"F11")
     
   temp
@@ -62,7 +60,7 @@
   
   
 
-  ####*Disgust Sensitivity####
+##Disgust Sensitivity---------------------
   #Mean function to speed up mean calcuatlion
   DATA<-
     DATA %>% 
@@ -72,14 +70,14 @@
              disgust_4=v_99,
              disgust_5=v_100,
              disgust_6=v_101) %>%
-            
-      mutate(disgust_all = rowMeans(c(disgust_1,disgust_2,disgust_3,
-                                  disgust_4,disgust_5,disgust_6),na.rm=T))
-              disgust_disease = mean(c(disgust_3,disgust_6),na.rm=T),
-              disgust_animal =  mean(c(disgust_2,disgust_5),na.rm=T),
-              disgust_general = mean(c(disgust_1,disgust_4),na.rm=T))
-    
-    ####*Modern Racism Scale####
+      mutate(disgust_all = rowMeans(dplyr::select(.,disgust_1,disgust_2,disgust_3,
+                                      disgust_4,disgust_5,disgust_6), na.rm=T),
+             disgust_disease = rowMeans(dplyr::select(.,disgust_3,disgust_6),na.rm=T),
+             disgust_animal =  rowMeans(dplyr::select(.,disgust_2,disgust_5),na.rm=T),
+             disgust_general = rowMeans(dplyr::select(.,disgust_1,disgust_4),na.rm=T))
+             
+    ##Racism Measures--------------------------
+    ###Modern Racism Scale-------------------------
     #Note- last item reverse coded
     DATA<-
       DATA %>% 
@@ -90,14 +88,18 @@
                mod_rac_5= car::recode(as.numeric(v_166)," 6= NA;5=NA;98=NA"),
                mod_rac_6= car::recode(as.numeric(v_167)," 6= NA;5=NA;98=NA;
                                         5=1;4=2;3=3;2=4;1=5",))%>%
-        rowwise()%>%
-        mutate(mod_rac_index=mean(c(mod_rac_1,mod_rac_2,mod_rac_3,mod_rac_4,mod_rac_5,mod_rac_6), na.rm=T))
+        mutate(mod_rac_index=rowMeans(dplyr::select(.,mod_rac_1,
+                                                    mod_rac_2,
+                                                    mod_rac_3,
+                                                    mod_rac_4,
+                                                    mod_rac_5,
+                                                    mod_rac_6), na.rm=T))
 
-    ####*PTV /AFD Support ####
+  ###PTV /AFD Support----------------------
     look_for(DATA, "F22")
     DATA$ptv_afd<-DATA$v_123
     
-     look_for(DATA, "F21")
+     ook_for(DATA, "F21")
      
      DATA<-
        DATA%>%
@@ -107,24 +109,19 @@
                              party == "weiß nicht" ~ NA_real_,
                              TRUE ~ 0 )))
      
-     ####*Group Evaluations####
-     look_for(DATA, "F31")
-     
+    ###Group Evaluations------------------------------
      DATA<-
        DATA%>%
         mutate(eval_white=v_184,
                eval_asian=v_178,
                eval_black=v_180,
-               eval_muslim=v_182)%>%
-       mutate(eval_asian_dif= eval_asian-eval_white,
-              eval_black_dif= eval_black-eval_white,
-              eval_muslim_dif= eval_muslim-eval_white)
+               eval_muslim=v_182)
               
      
-     ####*Strength of German identity####
+    ##Strength of German identity--------------------------
      DATA$ger_strength<-car::recode(DATA$v_40,"98=NA;99=NA")-1
 
-     ####*Evaluations of Life/Situation####
+    ##Evaluations of Life/Situation--------------------
      look_for(DATA,"F8")
      
      DATA<-
@@ -135,18 +132,17 @@
                eval_gov=v_140,
                eval_demo=v_142)
 
-     ####*Generalized Trust Variables####
+    ##Generalized Trust Variables-------------------
      look_for(DATA,"F27")
      
      DATA<-DATA%>%
        mutate(trust_1=v_145, 
               trust_2=v_148,
               trust_3=v_149)%>%
-       rowwise()%>%
-        mutate(trust_index = mean(c(trust_1,trust_2,trust_3),na.rm=T))
+      mutate(trust_index = rowMeans(dplyr::select(.,trust_1,trust_2,trust_3),na.rm=T))
      
      
-     ####*Trust in Institutions####
+    ##Trust in Institutions----------
      look_for(DATA,"F28") 
      
      DATA<-DATA%>%
@@ -157,7 +153,7 @@
               trust_rki=v_159,
               trust_media=v_161)
          
-     ####*Social Distance Measures####
+      ##Social Distance Measures----------------------
      look_for(DATA, "F33")
      
      DATA<-
@@ -174,45 +170,34 @@
                soc_dist_white_1=car::recode(v_194,"98=NA;99=NA")-4,
                soc_dist_white_2=car::recode(v_195,"98=NA;99=NA")-4,
                soc_dist_white_3=car::recode(v_196,"98=NA;99=NA")-4)%>%
-       rowwise()%>%
-         mutate(soc_dist_asian_index = mean(c(soc_dist_asian_1,soc_dist_asian_2,soc_dist_asian_3,na.rm=T)),
-                soc_dist_black_index = mean(c(soc_dist_black_1,soc_dist_black_2,soc_dist_black_3,na.rm=T)),
-                soc_dist_muslim_index = mean(c(soc_dist_muslim_1,soc_dist_muslim_2,soc_dist_muslim_3,na.rm=T)),
-                soc_dist_white_index = mean(c(soc_dist_white_1,soc_dist_white_2,soc_dist_white_3,na.rm=T)))
+         mutate(soc_dist_asian_index = rowMeans(dplyr::select(.,soc_dist_asian_1,soc_dist_asian_2,soc_dist_asian_3),na.rm=T),
+                soc_dist_black_index = rowMeans(dplyr::select(.,soc_dist_black_1,soc_dist_black_2,soc_dist_black_3),na.rm=T),
+                soc_dist_muslim_index = rowMeans(dplyr::select(.,soc_dist_muslim_1,soc_dist_muslim_2,soc_dist_muslim_3),na.rm=T),
+                soc_dist_white_index = rowMeans(dplyr::select(.,soc_dist_white_1,soc_dist_white_2,soc_dist_white_3),na.rm=T))
      
      
-      ####*Big 5####
-      #Some Items reverse coded)
-      DATA<-
-        DATA%>%
-          mutate(big5_extro_1=(car::recode(v_63,"98=NA;99=NA")*-1+5),
-                 big5_agree_1=(car::recode(v_64,"98=NA;99=NA")-1),
-                 big5_consc_1=(car::recode(v_65,"98=NA;99=NA")*-1+5),
-                 big5_neuro_1=(car::recode(v_66,"98=NA;99=NA")*-1+5),
-                 big5_open_1=(car::recode(v_67,"98=NA;99=NA")*-1+5),
-                 big5_extro_2=(car::recode(v_68,"98=NA;99=NA")-1),
-                 big5_agree_2=(car::recode(v_69,"98=NA;99=NA")*-1-5),
-                 big5_consc_2=(car::recode(v_70,"98=NA;99=NA")-1),
-                 big5_neuro_2=(car::recode(v_71,"98=NA;99=NA")-1),
-                 big5_open_2=(car::recode(v_72,"98=NA;99=NA")-1))%>%
-        rowwise()%>%
-          mutate(big_5_extro=mean(c(big5_extro_1,big5_extro_2),na.rm=T),
-                 big_5_agree=mean(c(big5_agree_1,big5_agree_2),na.rm=T),
-                 big_5_consc=mean(c(big5_consc_1,big5_consc_2),na.rm=T),
-                 big_5_neuro=mean(c(big5_neuro_1,big5_neuro_2),na.rm=T),
-                 big_5_open=mean(c(big5_open_1,big5_open_2),na.rm=T))
-  
-  ####*Civic Attitudes####
-  look_for(DATA, "F23")
-     
-    
-  DATA$civic_vote<-car::recode(DATA$v_124,"98=NA;99=NA;6=NA;7=NA")   
-  DATA$civic_elites<-car::recode(DATA$v_125,"98=NA;99=NA;6=NA;7=NA")
-  DATA$civic_int_eff<-car::recode(DATA$v_126,"98=NA;99=NA;6=NA;7=NA")
-  DATA$civic_authority<-car::recode(DATA$v_127,"98=NA;99=NA;6=NA;7=NA")
+    ####*Big 5####
+    #Some Items reverse coded)
+  DATA<-
+    DATA%>%
+    mutate(big5_extro_1=(car::recode(v_63,"98=NA;99=NA;-999:-970=NA")*-1+5),
+           big5_agree_1=(car::recode(v_64,"98=NA;99=NA;-999:-970=NA")-1),
+           big5_consc_1=(car::recode(v_65,"98=NA;99=NA;-999:-970=NA")*-1+5),
+           big5_neuro_1=(car::recode(v_66,"98=NA;99=NA;-999:-970=NA")*-1+5),
+           big5_open_1=(car::recode(v_67,"98=NA;99=NA;-999:-970=NA")*-1+5),
+           big5_extro_2=(car::recode(v_68,"98=NA;99=NA;-999:-970=NA")-1),
+           big5_agree_2=(car::recode(v_69,"98=NA;99=NA;-999:-970=NA")*-1+5),
+           big5_consc_2=(car::recode(v_70,"98=NA;99=NA;-999:-970=NA")-1),
+           big5_neuro_2=(car::recode(v_71,"98=NA;99=NA;-999:-970=NA")-1),
+           big5_open_2=(car::recode(v_72,"98=NA;99=NA;-999:-970=NA")-1))%>%
+    mutate(big_5_extro = rowMeans(dplyr::select(.,big5_extro_1,big5_extro_2), na.rm=T),
+           big_5_agree= rowMeans(dplyr::select(.,big5_agree_1,big5_agree_2), na.rm=T),
+           big_5_consc= rowMeans(dplyr::select(.,big5_consc_1,big5_extro_2), na.rm=T),
+           big_5_neuro= rowMeans(dplyr::select(.,big5_neuro_1,big5_neuro_2), na.rm=T),
+           big_5_open= rowMeans(dplyr::select(.,big5_open_1,big5_open_2), na.rm=T))
   
   
-  ####Asian Blame####
+##Asian Blame-------------------------
   look_for(DATA,"Asiaten")
   
   DATA$asian_blame_1<-car::recode(DATA$v_209,"98=NA;99=NA")-4
@@ -220,13 +205,11 @@
  
   
   
-####Perspective on "Asian"- German relations####
+##Perspective on "Asian"- German relations---------------------
   look_for(DATA,"F46")
   
   DATA$asian_trust<-car::recode(DATA$v_227,"98=NA;99=NA")-3
   DATA$asian_culture<-car::recode(DATA$v_228,"98=NA;99=NA")-3
   DATA$asian_children<-car::recode(DATA$v_229,"98=NA;99=NA")-3
   
-####Risikogruppe####
-  DATA$risk_group<-car::recode(DATA$v_197,"98=NA;99=NA")
   

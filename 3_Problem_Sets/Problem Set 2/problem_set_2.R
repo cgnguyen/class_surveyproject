@@ -5,14 +5,14 @@
   library(arm) #standardize Befehl 
  
   ##Daten einlesen ---------------------------------------------------------
-  D<-read_rds("./data/ess.rds")
+  D<-read_rds("./ess.rds")
 
 
 #Frage 1: Bivariate Regression ----------------------------------------------------
   mod_1<-lm(trstplt~gender, data=D)
   summary(mod_1)
   
-  D$gender_male<-relevel(D$gender, ref="Mann")
+  D$gender_male<-relevel(D$gender, ref="Frau")
   
   mod_1<-lm(trstplt~gender_male, data=D)
   summary(mod_1)
@@ -22,18 +22,21 @@
 
   mod_2<-lm(trstplt~stfdem, data=D)
 
-  summary(mod_2)
+  summary(arm::standardize(mod_2))
   
 # Frage 3:Soziodemographische Kontrollen -------------------
+    D$education_simple<-relevel(D$education_simple, ref="Mittel")
+
+  
   mod_3<-lm(trstplt~stfdem+
               age+education_simple+activity_simple+gender, data=D)
   
-  summary(mod_3)
+  summary(standardize(mod_3))
   
 #Frage 4: Zufriedenheitsvariablen 
    mod_4<-lm(trstplt~lr+stfeco+stfgov+stflife+stfdem+
                age+education_simple+activity_simple+gender, data=D)
-  
+   summary(mod_4)
 
 # Ergebnisse Exportieren --------------------------------------------------
   stargazer(mod_1,

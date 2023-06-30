@@ -8,34 +8,34 @@
   library(lme4) #Mehrbenenmodelle 
   library(sjPlot)
   library(sjmisc)
-library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
+  library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
 
 
 # Optional - Daten Vorbereiten --------------------------------------------
 
 
 ##Individualdaten einlesen ---------------------------------------------------------
-  D<-read_rds("./data/ess_neu.rds")
+  D<-read_rds("./6_data/ess_neu.rds")
   
   
 ##Nationale Daten hinzufügen---------------------------------------------------------
   ##Einzelne Variablen einlesen --------------------------------------------
     #GDP capita
-    GDP<-read.csv("./data/gdp.csv") 
+    GDP<-read.csv("./6_data/gdp.csv") 
     names(GDP)<-c("country_name","GDP") 
     
     GDP<-GDP%>%
       filter(!is.na(GDP))
 
     #inequality/gini
-    INEQUALITY<-read.csv("./data/8020.csv") 
+    INEQUALITY<-read.csv("./6_data/8020.csv") 
     names(INEQUALITY)<-c("country_name","INEQ") 
     
     INEQUALITY<-INEQUALITY%>%
       filter(!is.na(INEQ))
  
     #unemployment benefit generosity / social spending
-    SOCIAL<-read.csv("./data/socialprot.csv") 
+    SOCIAL<-read.csv("./6_data/socialprot.csv") 
     names(SOCIAL)<-c("country_name","SOCIAL") 
     
     SOCIAL<-SOCIAL%>%
@@ -56,7 +56,7 @@ library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
       mutate(essround=4)
 
     ##Namen der Länder mit ESS Harmoniseren -------------------------------------
-    COUNTRYCODE<-read_csv("./data/countrycodes.csv")
+    COUNTRYCODE<-read_csv("./6_data/countrycodes.csv")
     COUNTRYCODE
     
     COUNTRY<-
@@ -94,10 +94,12 @@ library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
     D$vote_bin<-relevel(D$vote_bin, ref = "Nein")
     
     #Daten Speichern
-    saveRDS(D, file = "./DATA/problem_set_3.rds")
+    saveRDS(D, file = "./6_data/problem_set_3.rds")
 
 # Frage 1: Bivariate Zusammenhang -----------------------------------------------------
-  mod_1<-glm(vote_bin~eduyrs, data=D,
+    summary(lm(as.numeric(vote_bin)~eduyrs, data=D))
+    
+     mod_1<-glm(vote_bin~eduyrs, data=D,
              family = binomial(link = "logit"))
     
   summary(mod_1)
@@ -112,10 +114,10 @@ library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
   
 
 #Frage 2: Multivariater Zusammenhang -------------------------------------
-  mod_2<-glm(vote_bin~eduyrs+
+  mod_2<-glm(vote_bin~eduyrs*
                trust_index_1, data=D,
               family = binomial(link = "logit"))
-
+  
   #Ergebnisse
   tidy(mod_2, exponentiate = T)
   
@@ -137,7 +139,7 @@ library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
       aes(x=eduyrs, y=fit,color=as.factor(trust_index_1))+
       geom_line()+
       theme_bw()+
-      xlab("Bildung")+ylab("Vertrauen/ Trust Index")+
+      xlab("Bildung")+ylab("Wahl")+
       #Konfidenz-Interval
       geom_ribbon(aes(ymin=fit-1.96*se.fit,ymax=fit+1.96*se.fit), alpha=0.2) 
 
@@ -193,7 +195,7 @@ library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
    mod_5<-lmer(trust_index_1~
                 eduyrs+gender+age+activity_simple+income_feel+
                 GDP+INEQ+SOCIAL+
-                 (1|cntry),
+                 (1|cntry)+
                 data=D)
 
   summary(mod_5)
@@ -202,15 +204,15 @@ library(jtools) #Hilfsfunktionen für GLMs und andere Dinge
   
 #Frage 6:Mehrebenenmodelle Interaktion-------------------------------------------
    mod_6<-lmer(trust_index_1~
-                eduyrs+gender+age+activity_simple+income_feel+
-                GDP+INEQ+SOCIAL+
+                eduyrs*GDP+gender+age+activity_simple+income_feel+
+                INEQ+SOCIAL+
                 (1|cntry),
                 data=D)
 
   summary(mod_6)
   screenreg(mod_6)
-  
-  interact_plot(mod_6, pred = eduyrs, modx = GDP,
+  ranef(mod_6)
+    interact_plot(mod_6, pred = eduyrs, modx = GDP,
                interval = T)
   
   #Koeffizienten /margins

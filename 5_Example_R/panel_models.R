@@ -110,7 +110,7 @@
     theme_bw()+
     ylab("FPO PTV")+
     xlab("Welle")+
-    ylim(0,5)
+    ylim(4,5)
   
 
   ##Mehrere Variablen - mit "reshaping"----------------
@@ -146,8 +146,7 @@
 
 
 #Panel Modelle ------------------------------------
-  ##Within Model
-  #Fixed Effect 
+  ##Fixed Effect Models --------------------
   #"within" - kann sehr lange dauern + Effekte sind selten
   #Hier "within" Individuen 
   
@@ -171,5 +170,64 @@
   
   tidy(mod_5)%>%
     filter(term=="emo_annoyed")
+  
+  #Statische Variablen können nicht betrachtet werden
+  mod_5a<-plm(fpo~emo_annoyed+age+gender+edu+activity, data=D_plm,
+             model="within", effect="individual")
+  
+  summary(mod_5a)
+  
+  #Extract Fixed Effects
+  
+  fixef(mod_5)
     
-      
+  ###Within - Zeit Effekt-----------------
+  mod_6<-plm(fpo~emo_annoyed, data=D_plm,
+             model="within", effect="time")
+
+  summary(mod_6)     
+  
+  ###Within -twoway Model -------------------
+  mod_7<-plm(fpo~emo_annoyed, data=D_plm,
+             model="within", effect=c("twoway"))
+
+  summary(mod_7)     
+  
+  ###Lagged Models------------------------
+  mod_9<-plm(fpo~lag(fpo,1), data=D_plm,
+             model="within", effect="time")
+
+  summary(mod_9)
+  
+  mod_10<-plm(fpo~lag(fpo,1)+emo_annoyed, data=D_plm,
+             model="within", effect="time")
+
+  summary(mod_10)
+  
+  
+##Random Effect Models-----------------------
+  mod_11<-plm(fpo~emo_annoyed, data=D_plm,
+             model="random", effect=c("individual"))
+  
+  summary(mod_11)
+  
+  mod_12<-plm(fpo~emo_annoyed+age+gender+edu+activity, data=D_plm,
+             model="random", effect=c("individual"))
+  
+  summary(mod_12)
+  
+#Tests----------------------
+    # ##Poolability: Are the coefficients the same-----------------------
+    #   mod_pool_1<-pvcm(fpo~emo_annoyed, data=D_plm, model="within", effect="individual")
+    # 
+    #   mod_pool_2<-plm(fpo~emo_annoyed, data=D_plm, model="within")
+    #   
+    #   pooltest(mod_pool_1,mod_pool_2)
+
+  
+  ##Random vs. Fixed Effects? Hausman Test: Fixed Effect wenn p<0.05
+  phtest(mod_5, mod_8)
+  
+  
+  
+

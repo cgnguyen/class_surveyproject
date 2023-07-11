@@ -1,7 +1,13 @@
 #Setup---------------------
   library(tidyverse)
   library(plm)
+  
 
+#Probleme mit CRAN
+  library(devtools)
+  install_github("jacob-long/panelr")
+  
+  library(panelr)
 
 #0.Data cleaning--------------------------------------
  D <- read_dta("6_Data/AUTNES/10017_da_en_v2_0.dta")

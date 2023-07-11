@@ -5,13 +5,12 @@
   library(panelr) #Hilfsfunktionen für Panel Modelle
   library(naniar) #Missing Value Visualization
   library(broom) #Daten Säubern
+  library(car)
 
 #Read and Clean Data----------------------------------
   ##Read in data ---------------------------
   ##Kann auch woanders abgelegt sein bei euch 
   D <- read_dta("6_Data/AUTNES/10017_da_en_v2_0.dta")
-  
- 
   
   #Datensatz im "Wide" format  
   head(D)
@@ -20,7 +19,6 @@
   ##Daten säubern und spezifische Variablen auswählen ---------------
   #Fokus auf spezifische Variablen - Referenz im Codebuch  
   
-
   D<-
     D%>%
       #Emotions about politics
@@ -54,11 +52,7 @@
             edu=as_factor(sd7),
             activity=as_factor(sd10),
             income=as_factor(sd22))
-  
-  
-  
 
-  
   D_select<-
     D%>%
       select(id,
@@ -96,22 +90,22 @@
     D_long<-complete_data(D_long, min.waves = "all")
     
 #Visualsierungen  --------------------
-     ##Veränderungen über die Zeit - Vertrauen ------------
+  ##Veränderungen über die Zeit - Vertrauen ------------
   
   #Eine Variable
   D_long %>% 
     select(wave,starts_with("fpo"))%>%
     ungroup()%>%
     group_by(wave)%>%
-    summarize(fpo=mean(fpo))%>%
+    summarize(fpo=mean(fpo, na.rm=T))%>%
     ggplot()+
-    aes(x=wave,y=fpo)+
-    geom_line()+
-    theme_bw()+
-    ylab("FPO PTV")+
-    xlab("Welle")+
-    ylim(4,5)
-  
+      aes(x=wave,y=fpo)+
+      geom_line()+
+      theme_bw()+
+      ylab("FPO PTV")+
+      xlab("Welle")+
+      ylim(0,10)
+    
 
   ##Mehrere Variablen - mit "reshaping"----------------
   D_long %>%
@@ -130,10 +124,9 @@
 #Einfache Regressionsmodelle ------------------------
   #Nur eine Welle - wie Cross Sectional Model
   mod_1<-lm(fpo_1~emo_annoyed_1, data=D_wide)
-  
+
   summary(mod_1)
-    
-    
+
   ##Pooled Model--------------------------
   mod_2<-lm(fpo ~ emo_annoyed, data=D_long)
   
@@ -186,6 +179,7 @@
              model="within", effect="time")
 
   summary(mod_6)     
+   fixef(mod_6)
   
   ###Within -twoway Model -------------------
   mod_7<-plm(fpo~emo_annoyed, data=D_plm,
@@ -195,12 +189,12 @@
   
   ###Lagged Models------------------------
   mod_9<-plm(fpo~lag(fpo,1), data=D_plm,
-             model="within", effect="time")
+             model="within", effect="individual")
 
   summary(mod_9)
   
   mod_10<-plm(fpo~lag(fpo,1)+emo_annoyed, data=D_plm,
-             model="within", effect="time")
+             model="within", effect="individual")
 
   summary(mod_10)
   
@@ -226,7 +220,7 @@
 
   
   ##Random vs. Fixed Effects? Hausman Test: Fixed Effect wenn p<0.05
-  phtest(mod_5, mod_8)
+  phtest(mod_5, mod_11)
   
   
   
